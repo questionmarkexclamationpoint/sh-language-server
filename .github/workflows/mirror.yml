@@ -36,22 +36,29 @@ jobs:
           git fetch --prune --tags origin
 
       - name: Sync default branch from origin
-        shell: bash
+        shell: zsh
         run: |
-          default_branch="$(git ls-remote --symref ${{ vars.ORIGIN }}.git HEAD | awk '/^ref:/ {sub("refs/heads/","",$2); print $2}')"
-          echo "Default branch: $default_branch"
-
-          git checkout "$default_branch"
-          git reset --hard "origin/$default_branch"
-          git push --force-with-lease mirror "$default_branch"
+          () {
+            emulate -LR zsh
+            setopt extendedglob
+            local default_branch=${${"$(git ls-remote --symref '${{ vars.ORIGIN }}' HEAD)"#*refs/heads/}%%[[:space:]]##HEAD*}
+            print -r -- 'Default branch: '$default_branch
+            git checkout $default_branch
+            git reset --hard origin/$default_branch
+            git push --force-with-lease mirror $default_branch
+          }
 
       - name: Sync all branches
-        shell: bash
+        shell: zsh
         run: |
-          git for-each-ref --format='%(refname:short)' refs/remotes/origin | sed 's#^origin/##' | while read -r branch; do
-            [ -n "$branch" ] || continue
-            [ "$branch" != "HEAD" ] || continue
-            [ "$branch" != "mirror" ] || continue
-            git checkout -B "$branch" "origin/$branch"
-            git push --force-with-lease mirror "$branch"
-          done
+          () {
+            emulate -LR zsh
+            local ref= branch=
+            for ref in ${(f)"$(git for-each-ref --format='%(refname:short)' refs/remotes/origin)"}; do
+              if [[ $ref != origin/* ]] continue
+              branch=${ref#origin/}
+              if [[ -z $branch || $branch == HEAD || $branch == "${{ github.event.repository.default_branch }}" ]] continue
+              git checkout -B $branch origin/$branch
+              git push --force-with-lease mirror $branch
+            done
+          }
