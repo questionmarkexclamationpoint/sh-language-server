@@ -40,8 +40,9 @@ jobs:
           git fetch --prune --tags origin
 
       - name: Sync default branch from origin
-        shell: zsh
+        shell: bash
         run: |
+          zsh <<'EOF'
           () {
             emulate -LR zsh
             setopt extendedglob
@@ -51,10 +52,12 @@ jobs:
             git reset --hard origin/$default_branch
             git push --force-with-lease mirror $default_branch
           }
+          EOF
 
       - name: Sync all branches
-        shell: zsh
+        shell: bash
         run: |
+          zsh -c <<'EOF'
           () {
             emulate -LR zsh
             local ref= branch=
@@ -66,3 +69,4 @@ jobs:
               git push --force-with-lease mirror $branch
             done
           }
+          EOF
