@@ -57,7 +57,7 @@ jobs:
       - name: Sync all branches
         shell: bash
         run: |
-          zsh -c <<'EOF'
+          zsh <<'EOF'
           () {
             emulate -LR zsh
             local ref= branch=
