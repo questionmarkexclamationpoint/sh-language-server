@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   sync:
+    environment: mirror
     runs-on: ubuntu-latest
 
     steps:
